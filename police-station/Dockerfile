@@ -19,4 +19,4 @@ RUN npm run build
 
 EXPOSE 8080
 CMD [ "http-server", "dist" ]
-© 2021 GitHub, Inc.
+
