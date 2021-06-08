@@ -1,16 +1,16 @@
 <template>
     <div fluid>
-        <div class="text-h2 d-flex justify-center ma-5">דיווחים</div>
-        <div v-show="!activities.length">
+        <div class="text-h3 d-flex justify-center ma-5">דיווחים</div>
+        <div v-show="!reports.length">
             לא נמצאו תוצאות
         </div>
         <v-main class="grey darken-1 fill-height">
             <v-card v-for="(report, index) in sortedReports" :key="index" outline elevation = "4" class="ma-2 pa-3">
-                <v-dialog v-model="dialog[report.actId]" width="500">
+                <v-dialog v-model="dialog[report.report_id]" width="500">
                     <template v-slot:activator="{ on, attrs }">
                         <div class="card-content">
                             <div></div>
-                            {{ report.actType }} {{ report.actTime }}
+                            {{ report.ev_type }} {{ report.ev_time }}
                         </div>
                         <v-btn color="blue lighten-2" dark v-bind="attrs" v-on="on">
                         לעוד מידע
@@ -18,23 +18,39 @@
                     </template>
                     <v-card>
                         <v-card-text class='text-h6'>
-                            סוג האירוע: {{ report.actType }} <br>
-                            סוג נשק: {{ report.actTime }} <br>
-                            נפגעים: {{ report.status }} <br>
-                            זמן אירוע: {{ presentCopNames(report.poList) }} <br>
-                            זמן הדיווח: {{ report.actGoal }} <br>
-                            שם המדווח: {{ presentCopNames(report.actApprover) }}
+                            סוג האירוע: {{ report.ev_type }} <br>
+                            <div v-if="report.ev_type === 'דקירה'">
+                                סוג נשק: {{ report.weapon_type }} <br>
+                                מספר נפגעים: {{ report.casualties_num }} <br>
+                                מספר תעודת זהות הדוקר: {{ report.stabber_id }} <br>
+                            </div>
+                            <div v-if="report.ev_type === 'ירי'">
+                                סוג נשק: {{ report.weapon_type }} <br>
+                                מספר נפגעים: {{ report.casualties_num }} <br>
+                                מספר תעודת זהות היורה: {{ report.shooter_id }} <br>
+                            </div>
+                            <div v-if="report.ev_type === 'חטיפה'">
+                                מספר תעודת זהות של החוטף: {{ report.kidnapper_id }} <br>
+                                מספר תעודת זהות של הנחטף: {{ report.kidnapped_id }} <br>
+                                מיקום ידוע אחרון: {{ report.last_place_known }} <br>
+                            </div>
+                            <div v-if="report.ev_type === 'תאונה'">
+                                מספר תעודת זהות של הפוגע: {{ report.hitter_id }} <br>
+                                מספר תעודת זהות של הנפגע: {{ report.hit_id }} <br>
+                                מספר נפגעים: {{ report.casualties_num }} <br>
+                            </div>
+                            
+                            זמן אירוע: {{ report.ev_time }} <br>
+                            זמן הדיווח: {{ report.ev_report_time }} <br>
+                            תעודת זהות של המדווח: {{ report.reporter_id }}
                         </v-card-text>
 
                         <v-divider></v-divider>
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="blue darken-1" text @click="dialog[activity.actId] = false">
-                                חזרה ללוח
-                            </v-btn>
-                            <v-btn v-if="(activity.status !== 'פעילות בביצוע')" color="blue darken-1" text @click="startActivity(activity.actId)">
-                                הוצאת הפעילות לפועל
+                            <v-btn color="blue darken-1" text @click="dialog[report.report_id] = false">
+                                חזרה לדיווחים
                             </v-btn>
                         </v-card-actions>
                     </v-card>
@@ -45,31 +61,29 @@
 </template>
 
 <script>
+import api from '../api.js';
+
 export default {
-    name: 'Activities',
+    name: 'Reports',
     data() {
         return {
-            reports: [{}, 
-                {}],
-            policemen: [{}],
+            reports: [],
+            policemen: [],
             dialog: {},
         };
+    },
+    created() {
+        api.policeStation().getReports()
+            .then(({ data }) => { this.reports = data })
+            .catch((err) => console.log(`${err} couldn't get the reports.`));
+        api.policeStation().getCops()
+            .then(({ data }) => { this.policemen = data })
+            .catch((err) => console.log(`${err} couldn't get the policemen.`));
     },
     computed: {
         sortedReports() {
             return this.reports; 
         },
-        copNames() {
-            return ['names'];
-        }
-    },
-    methods: {
-        presentCopNames(copIndexes) {
-            return copIndexes;
-        },
-        getPoliceIndexes(cops) {
-            return cops;
-        }
     }
 }
 </script>

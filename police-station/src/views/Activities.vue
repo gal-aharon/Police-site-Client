@@ -1,16 +1,15 @@
 <template>
     <div fluid>
-        <div class="text-h2 d-flex justify-center ma-5">פעילויות</div>
+        <div class="text-h3 d-flex justify-center ma-5">פעילויות</div>
         <div v-show="!activities.length">
             לא נמצאו תוצאות
         </div>
         <v-main class="grey darken-1 fill-height">
             <v-card v-for="(activity, index) in sortedActivities" :key="index" outline elevation = "4" class="ma-2 pa-3">
-                <v-dialog v-model="dialog[activity.actId]" width="500">
-                    <template v-slot:activator="{ on, attrs }">
-                        <div class="card-content">
-                            <div></div>
-                            {{ activity.actType }} {{ activity.actTime }}
+                <v-dialog v-model="dialog[activity.act_id]" width="500">
+                    <template v-slot:activator="{ on, attrs }" class="current_activity">
+                        <div class="card-content" :class="{ 'current_activity' : activity.status === 'פעילות בביצוע'}">
+                            {{ activity.act_type }} {{ formattedDate(activity.act_time) }}
                         </div>
                         <v-btn color="blue lighten-2" dark v-bind="attrs" v-on="on">
                         לעוד מידע
@@ -18,23 +17,26 @@
                     </template>
                     <v-card>
                         <v-card-text class='text-h6'>
-                            סוג פעילות: {{ activity.actType }} <br>
-                            זמן מתכונן לפעילות: {{ activity.actTime }} <br>
+                            סוג פעילות: {{ activity.act_type }} <br>
+                            זמן מתכונן לפעילות: {{ formattedDate(activity.act_time) }} <br>
                             סטטוס: {{ activity.status }} <br>
-                            שוטרים משתתפים: {{ presentCopNames(activity.poList) }} <br>
-                            מטרת הפעילות: {{ activity.actGoal }} <br>
-                            שם המאשר: {{ presentCopNames(activity.actApprover) }}
+                            שוטרים משתתפים: {{ presentCopNames(activity.po_list) }} <br>
+                            מטרת הפעילות: {{ activity.act_goal }} <br>
+                            שם המאשר: {{ presentCopNames([activity.act_approver]) }}
                         </v-card-text>
 
                         <v-divider></v-divider>
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="blue darken-1" text @click="dialog[activity.actId] = false">
+                            <v-btn color="blue darken-1" text @click="dialog[activity.act_id] = false">
                                 חזרה ללוח
                             </v-btn>
-                            <v-btn v-if="(activity.status !== 'פעילות בביצוע')" color="blue darken-1" text @click="startActivity(activity.actId)">
+                            <v-btn v-if="(activity.status === 'פעילות עתידית')" color="blue darken-1" text @click="startActivity(activity.act_id)">
                                 הוצאת הפעילות לפועל
+                            </v-btn>
+                            <v-btn v-if="(activity.status === 'פעילות בביצוע')" color="blue darken-1" text @click="endActivity(activity.act_id)">
+                                סיום הפעילות
                             </v-btn>
                         </v-card-actions>
                     </v-card>
@@ -57,7 +59,9 @@
                                 <v-col cols="12" sm="6">
                                     <v-select v-model="activityType" :items="['מחסום מכוניות', 'מארב', 'פטרול']" label="סוג הפעילות" required></v-select>
                                 </v-col>
-                                <v-date-picker cols="12" sm="6" v-model="activityDate"></v-date-picker>
+                                <v-col cols="12">
+                                    <v-datetime-picker v-model="activityDate" label="Select date and time" required> </v-datetime-picker>
+                                </v-col>
                                 <v-col cols="12">
                                     <v-text-field v-model="activityGoal" label="מטרת הפעילות" required></v-text-field>
                                 </v-col>
@@ -86,62 +90,82 @@
 </template>
 
 <script>
+import api from '../api.js';
+
 export default {
     name: 'Activities',
     data() {
         return {
-            activities: [{actType:'מחסום מכוניות', actTime:'1/10/2021 13:30:00', poList: [2,1], actGoal:'לחסום כביש לצורכי עבודה בדרך', status:'פעילות עבר', actApprover: 2, actLocX: 24.1, actLocY: 12.2, actId: 1}, 
-                {actType:'אמבוש', actTime:'12/12/2021 12:00:00', poList: [3,1], actGoal:'לתפוס חשודים', status:'פעילות עתידית', actApprover: 1, actLocX: 12.2, actLocY: 24.1, actId: 4}],
-            policemen: [{}],
+            activities: [],
+            policemen: [],
             dialog: {},
             activityType: '',
-            activityDate: new Date().toISOString().substr(0, 10),
+            activityDate: '',
             activityGoal: '',
             copList: [],
             activityApprover: ''
         };
+    },
+    created() {
+        api.policeStation().getActivities()
+            .then(({ data }) => { this.activities = data })
+            .catch((err) => console.log(`${err} couldn't get the activities.`));
+        api.policeStation().getCops()
+            .then(({ data }) => { this.policemen = data })
+            .catch((err) => console.log(`${err} couldn't get the policemen.`));
     },
     computed: {
         sortedActivities() {
             return this.activities; 
         },
         copNames() {
-            return ['names'];
+            return this.policemen.map(cop => cop.name);
         }
     },
     methods: {
+        formattedDate(date) {
+            return new Date(date).toLocaleString('en-US', { hour12: false });
+        },
         startActivity(activityId) {
             this.dialog[activityId] = false;
-            this.activities.find(activity => activity.actId === activityId).status = 'פעילות בביצוע';
+            const activity = this.activities.find(activity => activity.act_id === activityId);
+            activity.status = 'פעילות בביצוע';
+            activity.act_time = new Date().toLocaleString('en-US', { hour12: false });
         },
-        presentCopNames(copIndexes) {
-            return copIndexes;
+        endActivity(activityId) {
+            this.dialog[activityId] = false;
+            this.activities.find(activity => activity.act_id === activityId).status = 'פעילות עבר';
         },
         addActivity() {
             this.dialog.addActivity = false;
             const newActivity = {
-                actType: this.activityType,
-                actTime: this.activityDate,
-                actGoal: this.activityGoal,
-                poList: this.getPoliceIndexes(this.copList),
-                status: 'פעילות עתידית',
-                actApprover: this.activityApprover,
+                act_type: this.activityType,
+                act_time: this.activityDate,
+                act_goal: this.activityGoal,
+                po_list: this.getPoliceIndexes(this.copList),
+                status: this.activityDate >= new Date ? 'פעילות עתידית' : 'פעילות עבר',
+                act_approver: this.getPoliceIndexes(this.activityApprover)[0],
             }
+            newActivity.act_id = new Date(newActivity.act_time) % 100;
             this.activityType = '';
-            this.activityDate = new Date().toISOString().substr(0, 10);
+            this.activityDate = '';
             this.activityGoal = '';
             this.copList = [];
             this.activityApprover = '';
             this.activities.push(newActivity);
-            console.log(newActivity);
         },
-        getPoliceIndexes(cops) {
-            return cops;
+        presentCopNames(copIndexes) {
+            return copIndexes.map(cop => cop.name).join(', ');
+        },
+        getPoliceIndexes(copNames) {
+            return copNames.map(cop => cop.id);
         }
     }
 }
 </script>
 
 <style>
-
+    .current_activity {
+        background-color: greenyellow;
+    }
 </style>

@@ -2,11 +2,11 @@
 	<v-toolbar color="blue-grey darken-3" dark rtl>
 		<img class="navbar-item" alt="Police Station logo" src="../assets/policelogo.png" height="100%">
 		<v-spacer></v-spacer>
-		<v-toolbar-title>תחנת המשטרה</v-toolbar-title>
+		<v-toolbar-title class="text-h2">תחנת המשטרה</v-toolbar-title>
 		<v-spacer></v-spacer>
-		<li><router-link to="/reports" exact><strong>דיווחים</strong></router-link></li>
-		<li><router-link to="/map" exact><strong>מפה</strong></router-link></li>
-		<li><router-link to="/" exact><strong>פעילויות</strong></router-link></li>
+		<a><router-link to="/reports" exact><strong>דיווחים</strong></router-link></a>
+		<a><router-link to="/map" exact><strong>מפה</strong></router-link></a>
+		<a><router-link to="/" exact><strong>פעילויות</strong></router-link></a>
 	</v-toolbar>
 </template>
 
@@ -21,7 +21,13 @@ export default {
 </script>
 
 <style scoped>
-	.router-link-active{
-		color: #000;
+	a, a:link, a:hover, a:active {
+		color: white !important;
+		margin: 0.3%;
+		font-size: x-large;
+		cursor:pointer;
+	}
+	.router-link-active {
+		font-weight: bold;
 	}
 </style>
