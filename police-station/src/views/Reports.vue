@@ -4,6 +4,14 @@
         <div v-show="!reports.length">
             לא נמצאו תוצאות
         </div>
+        <div v-show="reports.length">
+            <v-select
+          :items="types"
+          label="בחר סוג אירוע"
+          solo
+          v-model="type"
+        ></v-select>
+        </div>
         <v-main class="grey darken-1 fill-height">
             <v-card v-for="(report, index) in sortedReports" :key="index" outline elevation = "4" class="ma-2 pa-3">
                 <v-dialog v-model="dialog[report.report_id]" width="500">
@@ -41,7 +49,7 @@
                             </div>
                             
                             זמן אירוע: {{ report.ev_time }} <br>
-                            זמן הדיווח: {{ report.ev_report_time }} <br>
+                            זמן הדיווח: {{ report.evreporttime }} <br>
                             תעודת זהות של המדווח: {{ report.reporter_id }}
                         </v-card-text>
 
@@ -70,6 +78,8 @@ export default {
             reports: [],
             policemen: [],
             dialog: {},
+            types: ['חטיפה', 'דקירה', 'תאונה', 'ירי'],
+            type: ''
         };
     },
     created() {
@@ -88,7 +98,6 @@ export default {
                     }
                 });
                 this.reports = test;
-                console.log(this.reports);
             })
             .catch((err) => console.log(`${err} couldn't get the reports.`));
         api.policeStation().getCops()
@@ -97,8 +106,22 @@ export default {
     },
     computed: {
         sortedReports() {
-            return this.reports; 
+            const sortedReportList = this.filterByTypeArray();
+            const sortedReportListByDate = this.sortByDateArray(sortedReportList);
+
+            return sortedReportListByDate; 
         },
+    },
+    methods: {
+        sortByDateArray(sortedReportList) {
+            return sortedReportList.sort((r1, r2) => {return Date.parse(r1.evreporttime) < Date.parse(r2.evreporttime) ?-1:1});
+        },
+        filterByTypeArray() {
+            if(this.type !== '') {
+                return this.reports.filter((report) => report.ev_type === this.type);
+                } 
+             return this.reports;
+        }
     }
 }
 </script>

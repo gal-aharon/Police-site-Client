@@ -5,7 +5,7 @@ export default {
   policeStation() {
     return {
       getActivities: () => axios.get(`${baseURL}/activity`),
-      addActivity: (newActivity) => axios.post(`${baseURL}/add`, newActivity),
+      addActivity: (newActivity) => axios.post(`${baseURL}/activity/add`, newActivity),
       getCops: () => axios.get(`${baseURL}/users`),
       getReports: () => axios.get(`${baseURL}/report`),
       getStabbingReport: (reportId) => axios.get(`${baseURL}/stabbing/id/${reportId}`),

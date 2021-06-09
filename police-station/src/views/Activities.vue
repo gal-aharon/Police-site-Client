@@ -85,6 +85,12 @@
                     </v-card-actions>
                 </v-card>
             </v-dialog>
+                        <v-select
+            :items="statuses"
+            label="בחר זמן פעילות"
+            solo
+            v-model="status"
+            ></v-select>
         </v-main>
     </div>
 </template>
@@ -103,7 +109,9 @@ export default {
             activityDate: '',
             activityGoal: '',
             copList: [],
-            activityApprover: ''
+            activityApprover: '',
+            statuses: ['פעילות עתידית','פעילות עבר','פעילות בביצוע'],
+            status: ''
         };
     },
     created() {
@@ -116,13 +124,24 @@ export default {
     },
     computed: {
         sortedActivities() {
-            return this.activities; 
+            const sortedActivitiesList = this.filterByStatus();
+            const sortedActivitiesListByDate = this.sortByDateArray(sortedActivitiesList);
+            return sortedActivitiesListByDate; 
         },
         copNames() {
             return this.policemen.map(cop => cop.full_name);
         }
     },
     methods: {
+        filterByStatus(){
+        if(this.status !== '') {
+                return this.activities.filter((activity) => activity.status === this.status);
+            } 
+             return this.activities;
+        },
+        sortByDateArray(sortedActivitiesList){
+                return sortedActivitiesList.sort((a1, a2) => {return Date.parse(a1.act_time) < Date.parse(a2.act_time) ?-1:1});
+        },
         formattedDate(date) {
             return new Date(date).toLocaleString('en-US', { hour12: false });
         },
