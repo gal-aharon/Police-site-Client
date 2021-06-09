@@ -119,7 +119,7 @@ export default {
             return this.activities; 
         },
         copNames() {
-            return this.policemen.map(cop => cop.name);
+            return this.policemen.map(cop => cop.full_name);
         }
     },
     methods: {
@@ -140,25 +140,31 @@ export default {
             this.dialog.addActivity = false;
             const newActivity = {
                 act_type: this.activityType,
-                act_time: this.activityDate,
+                act_time: new Date(this.activityDate),
                 act_goal: this.activityGoal,
-                po_list: this.getPoliceIndexes(this.copList),
+                po_list: this.getPoliceObjects(this.copList),
                 status: this.activityDate >= new Date ? 'פעילות עתידית' : 'פעילות עבר',
-                act_approver: this.getPoliceIndexes(this.activityApprover)[0],
+                // act_approver: this.getPoliceObjects(this.activityApprover),
+                // to remove later
+                act_approver: 1,
+                act_locx: 12.5,
+                act_locy: 12.5,
             }
-            newActivity.act_id = new Date(newActivity.act_time) % 100;
             this.activityType = '';
             this.activityDate = '';
             this.activityGoal = '';
             this.copList = [];
             this.activityApprover = '';
             this.activities.push(newActivity);
+            api.policeStation().addActivity(newActivity)
+                .catch((err) => console.log(`${err} couldn't post activity.`));
+            newActivity.act_id = new Date(newActivity.act_time) % 100;
         },
-        presentCopNames(copIndexes) {
-            return copIndexes.map(cop => cop.name).join(', ');
+        presentCopNames(copList) {
+            return copList.map(cop => cop.full_name).join(', ');
         },
-        getPoliceIndexes(copNames) {
-            return copNames.map(cop => cop.id);
+        getPoliceObjects(copList) {
+            return this.policemen.filter(cop => copList.includes(cop.full_name));
         }
     }
 }

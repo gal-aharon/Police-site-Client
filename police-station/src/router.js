@@ -1,6 +1,7 @@
 import VueRouter from 'vue-router';
 import Activities from './views/Activities.vue';
 import Reports from './views/Reports.vue';
+import Map from './views/Map.vue';
 
 const routes = [
   {
@@ -12,6 +13,11 @@ const routes = [
     path: '/reports',
     name: 'reports',
     component: Reports
+  },
+  {
+    path: '/map',
+    name: 'map',
+    component: Map
   }
 ];
 

@@ -74,7 +74,22 @@ export default {
     },
     created() {
         api.policeStation().getReports()
-            .then(({ data }) => { this.reports = data })
+            .then(({ data }) => { 
+                const test = [...data];
+                test.forEach(report => {
+                    if (report.ev_type === 'חטיפה') {
+                        api.policeStation().getKidnappingReport(report.report_id).then(({ data }) => report = Object.assign(report, data));
+                    } else if (report.ev_type === 'דקירה') {
+                        api.policeStation().getStabbingReport(report.report_id).then(({ data }) => report = Object.assign(report, data));
+                    } else if (report.ev_type === 'ירי') {
+                        api.policeStation().getShootingReport(report.report_id).then(({ data }) => report = Object.assign(report, data));
+                    } else if (report.ev_type === 'תאונה') {
+                        api.policeStation().getAccidentReport(report.report_id).then(({ data }) => report = Object.assign(report, data));
+                    }
+                });
+                this.reports = test;
+                console.log(this.reports);
+            })
             .catch((err) => console.log(`${err} couldn't get the reports.`));
         api.policeStation().getCops()
             .then(({ data }) => { this.policemen = data })
