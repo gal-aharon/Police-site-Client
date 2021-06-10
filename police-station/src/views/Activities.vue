@@ -163,9 +163,7 @@ export default {
                 act_goal: this.activityGoal,
                 po_list: this.getPoliceObjects(this.copList),
                 status: this.activityDate >= new Date ? 'פעילות עתידית' : 'פעילות עבר',
-                // act_approver: this.getPoliceObjects(this.activityApprover),
-                // to remove later
-                act_approver: 1,
+                act_approver: this.getPoliceObjects(this.activityApprover)[0],
                 act_locx: 12.5,
                 act_locy: 12.5,
             }
